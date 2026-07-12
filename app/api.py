@@ -106,7 +106,7 @@ def ask(body: AskBody, request: Request):
         # the slot stays consumed — reserved at check(), so failures aren't free
         raise HTTPException(502, "The language model call failed - try again shortly.")
     limiter.settle(out["usage"]["inputTokens"], out["usage"]["outputTokens"])
-    return {"answer": out["answer"], "toolsUsed": out["toolsUsed"]}
+    return {"answer": out["answer"], "toolsUsed": out["toolsUsed"], "model": out.get("model")}
 
 
 @app.api_route("/mcp", methods=["GET", "POST", "DELETE"], include_in_schema=False)

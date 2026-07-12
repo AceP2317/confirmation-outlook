@@ -523,7 +523,7 @@ function Ask() {
       if (r.status === 503) setState({ kind: 'offline', detail: body.detail })
       else if (r.status === 429) setState({ kind: 'limited', scope: body.scope, retryAfter: body.retryAfter })
       else if (!r.ok) setState({ kind: 'error', detail: body.detail || `HTTP ${r.status}` })
-      else setState({ kind: 'answer', answer: body.answer, tools: body.toolsUsed || [] })
+      else setState({ kind: 'answer', answer: body.answer, tools: body.toolsUsed || [], model: body.model })
     } catch (e) {
       setState({ kind: 'error', detail: String(e) })
     }
@@ -550,8 +550,11 @@ function Ask() {
       {state.kind === 'answer' && (
         <div className="np-answer">
           <div className="a">{renderBold(state.answer)}</div>
-          {state.tools.length > 0 && (
-            <div className="np-tools">{state.tools.map((t, i) => <span key={i} className="np-chip">{t}</span>)}</div>
+          {(state.tools.length > 0 || state.model) && (
+            <div className="np-tools">
+              {state.tools.map((t, i) => <span key={i} className="np-chip">{t}</span>)}
+              {state.model && <span className="np-chip" title="Model string echoed by the Anthropic API for this exact request">{state.model}</span>}
+            </div>
           )}
         </div>
       )}

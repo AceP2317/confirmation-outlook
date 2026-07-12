@@ -78,7 +78,7 @@ def ask(question: str) -> dict:
         tot_out += resp.usage.output_tokens
         if resp.stop_reason != "tool_use":
             answer = "".join(b.text for b in resp.content if b.type == "text")
-            return {"answer": answer, "toolsUsed": tools_used,
+            return {"answer": answer, "toolsUsed": tools_used, "model": resp.model,
                     "usage": {"inputTokens": tot_in, "outputTokens": tot_out}}
         messages.append({"role": "assistant", "content": resp.content})
         results = []
@@ -90,4 +90,5 @@ def ask(question: str) -> dict:
                                 "content": json.dumps(out)[:20000]})
         messages.append({"role": "user", "content": results})
     return {"answer": "I hit the tool-call limit before finishing - try a narrower question.",
-            "toolsUsed": tools_used, "usage": {"inputTokens": tot_in, "outputTokens": tot_out}}
+            "toolsUsed": tools_used, "model": MODEL,
+            "usage": {"inputTokens": tot_in, "outputTokens": tot_out}}
