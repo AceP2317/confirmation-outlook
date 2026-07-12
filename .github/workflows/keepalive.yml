@@ -1,0 +1,16 @@
+name: keepalive
+# Free HF Spaces sleep after ~48h without a request; a recruiter clicking a
+# stale link would wait out a container start. A ping every 6 hours keeps the
+# Space hot (and the baked DB makes even a true cold start only seconds).
+# NOTE: GitHub pauses scheduled workflows after ~60 days of repo inactivity —
+# any commit re-arms it.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -sS --max-time 60 https://ianpro42086-confirmation-outlook.hf.space/api/health || true
