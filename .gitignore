@@ -6,3 +6,8 @@ __pycache__/
 data/*.db
 web/node_modules/
 web/dist/
+
+# Working docs — local only. They carry private context (employer, internal
+# program names, infra) and this repo is public. Never commit them.
+CLAUDE.md
+PICKUP.md

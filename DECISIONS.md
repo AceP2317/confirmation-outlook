@@ -1,0 +1,11 @@
+# Decisions — locked, don't relitigate
+
+- **D1 — Rebuild from spec, never fork** (portfolio-demo skill rule): the demo shares zero code or data shapes with the private internal tool; de-identification is by construction, verified by grep blocklist. Northpoint Manufacturing is the constant fictional company across the portfolio set.
+- **D2 — Full-stack shape**: Python engine + FastAPI + MCP + React, not the client-only single-file shape of the earlier portfolio demos. The full stack IS this piece's differentiator. (Operator call, 2026-07-12.)
+- **D3 — SQLite data layer, warm state baked at image build**: kills the internal tool's 90 s warm problem; tables inspectable, not pickled.
+- **D4 — No Docker on the operator's personal PC** — hard rule. Containers build remotely only (CI, Render, VPS).
+- **D5 — Hosting path**: HF free tier rejected it (402 — Docker Spaces need PRO since ~2026); the operator's existing personal box ruled out by his own business-separation rule + that box's sealed zero-ingress perimeter. Interim = Render free; final = a dedicated AppliedIQ business VPS. Do not revisit the personal box for this.
+- **D6 — Ask tab**: live, pinned Haiku (`claude-haiku-4-5-20251001`), hard caps (5/hr/IP, 20/day/IP, $1/day global, reserve-at-check), answers only from tool results, model string surfaced as a chip. Upgrade knob is `ASK_MODEL` env var (service-scoped; API keys carry no model settings — other projects on the same key are unaffected by design).
+- **D7 — Design lane**: flight-deck graphite + signal amber, dark default (operator pick from three impeccable lanes); chart palettes are dataviz-validated per theme — re-run the validator if palette values change.
+- **D8 — Honesty surfaces are load-bearing**: persistence floor reported separately from the leading signal; volume shown with dispersion + naive baseline; two exposure scales never blended; unknown week labels fall back to latest WITH a note. These mirror the method's credibility story — do not simplify away.
+- **D9 — Accepted risks**: xlsx 0.18.5 npm CVEs (write-only use; vendor 0.20.x only if the Dependabot banner bothers); in-memory rate-limit state resets on restart (SQLite counter only if abuse appears).
