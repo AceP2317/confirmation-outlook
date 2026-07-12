@@ -6,10 +6,18 @@ FastMCP otherwise serves at its own /mcp and the endpoint lands at /mcp/mcp.
 from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from .service import get_service
 
-mcp = FastMCP("northpoint-confirmation-outlook", streamable_http_path="/")
+# DNS-rebinding protection defaults to a localhost Host allowlist, which 421s
+# every request on a public deployment — this is a public read-only server,
+# so the protection does not apply.
+mcp = FastMCP(
+    "northpoint-confirmation-outlook",
+    streamable_http_path="/",
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+)
 
 
 @mcp.tool()

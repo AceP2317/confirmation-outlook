@@ -147,9 +147,9 @@ function RiskHeatmap({ coarse, fine }) {
 function HorizonChart({ reach }) {
   const tips = useContext(TipCtx)
   const W = 300, H = 150, L = 34, R = 14, T = 16, B = 26
-  const maxLift = Math.max(...reach.map((r) => r.lift || 0)) * 1.2
+  const maxLift = Math.max(...reach.map((r) => r.lift || 0), 1) * 1.2
   const x = (i) => L + (i * (W - L - R)) / (reach.length - 1)
-  const y = (v) => T + ((maxLift - v) * (H - T - B)) / maxLift
+  const y = (v) => T + ((maxLift - (v || 0)) * (H - T - B)) / maxLift
   const path = reach.map((r, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(r.lift).toFixed(1)}`).join('')
   return (
     <svg className="np-svg np-fade" viewBox={`0 0 ${W} ${H}`} role="img"
@@ -329,7 +329,7 @@ function Outlook({ head, fc, brk }) {
           <p>P(fail next week) is <b>measured</b> for each state cell across all observed transitions &mdash; a frequency table, not a fitted model &mdash; with a minimum-support fallback from the fine table to the coarse one.</p>
           <p>The final week is <b>held out</b>: the register is predicted from the prior week&rsquo;s signals and scored against what actually happened.</p>
           <p>The at-risk register ranks materials by expected units (probability &times; current exposure), splits recoverable from structural, and names the lever an operator would pull.</p>
-          <p>A build-time validation gate ({'38'} assertions) checks that the engine honestly recovers the planted structure &mdash; the build fails if any assertion fails. See <a href="https://github.com/AceP2317/confirmation-outlook/blob/main/docs/METHODOLOGY.md">METHODOLOGY.md</a>.</p>
+          <p>A build-time validation gate (42 assertions) checks that the engine honestly recovers the planted structure &mdash; the build fails if any assertion fails. See <a href="https://github.com/AceP2317/confirmation-outlook/blob/main/docs/METHODOLOGY.md">METHODOLOGY.md</a>.</p>
         </div>
       </details>
     </div>
@@ -377,12 +377,12 @@ function Register() {
   }, [qs])
 
   const exportXlsx = async (scope) => {
-    let rows
-    if (scope === 'filtered') rows = data.rows
-    else {
-      const r = await fetch(`${API_BASE}/api/register?limit=100000`)
-      rows = (await r.json()).rows
-    }
+    // both exports refetch with limit lifted — the on-screen 400-row cap never truncates a file
+    const query = scope === 'filtered'
+      ? `${qs.replace(/limit=\d+/, 'limit=100000')}`
+      : 'limit=100000'
+    const r = await fetch(`${API_BASE}/api/register?${query}`)
+    const rows = (await r.json()).rows
     const flat = rows.map((r) => Object.fromEntries(REG_COLS.map(([k, label]) => [label, r[k]])))
     const ws = XLSX.utils.json_to_sheet(flat)
     ws['!cols'] = REG_COLS.map(([k]) => ({ wch: k === 'lever' ? 44 : k === 'description' ? 26 : 14 }))

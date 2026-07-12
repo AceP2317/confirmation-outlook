@@ -26,6 +26,8 @@ def check(cond: bool, msg: str) -> None:
 
 
 def run(db_path=DB_PATH) -> int:
+    PASSED.clear()
+    FAILED.clear()
     conn = connect(db_path, ro=True)
 
     # --- headline: right level, memoryless

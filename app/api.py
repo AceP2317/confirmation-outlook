@@ -103,9 +103,16 @@ def ask(body: AskBody, request: Request):
     try:
         out = run_ask(body.question)
     except Exception:
+        # the slot stays consumed — reserved at check(), so failures aren't free
         raise HTTPException(502, "The language model call failed - try again shortly.")
-    limiter.record(ip, out["usage"]["inputTokens"], out["usage"]["outputTokens"])
+    limiter.settle(out["usage"]["inputTokens"], out["usage"]["outputTokens"])
     return {"answer": out["answer"], "toolsUsed": out["toolsUsed"]}
+
+
+@app.api_route("/mcp", methods=["GET", "POST", "DELETE"], include_in_schema=False)
+def mcp_slash_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/mcp/", status_code=307)
 
 
 app.mount("/mcp", mcp.streamable_http_app())

@@ -1,0 +1,16 @@
+# Reference compose for self-hosting (e.g. behind a reverse proxy).
+# ANTHROPIC_API_KEY comes from an env file OUTSIDE the repo; omit it and
+# everything except the Ask tab still works.
+services:
+  confirmation-outlook:
+    build: .
+    ports:
+      - "7860:7860"
+    environment:
+      - PORT=7860
+    env_file:
+      - path: .env
+        required: false
+    read_only: true
+    restart: unless-stopped
+    mem_limit: 1g

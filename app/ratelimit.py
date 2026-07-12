@@ -1,13 +1,16 @@
 """Hard caps for the public Ask endpoint.
 
 Two scopes: per-IP sliding windows, and a global daily budget accumulated
-from real token usage. In-process state by design.
+from real token usage. Slots are RESERVED at check time (so concurrent
+bursts and failed calls still count) and cost is settled after the call.
+In-process state by design.
 # ponytail: state resets on container restart; move to a SQLite counter
 # table if abuse ever shows up in practice.
 """
 from __future__ import annotations
 
 import os
+import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
@@ -27,6 +30,7 @@ class AskLimiter:
         self.day = self._today()
         self.day_requests = 0
         self.day_cost = 0.0
+        self._lock = threading.Lock()
 
     def _today(self) -> str:
         return datetime.now(timezone.utc).date().isoformat()
@@ -37,36 +41,44 @@ class AskLimiter:
             self.day, self.day_requests, self.day_cost = today, 0, 0.0
 
     def check(self, ip: str) -> tuple[bool, str | None, int]:
-        """Returns (allowed, blocked_scope, retry_after_seconds)."""
-        self._roll_day()
-        if self.day_requests >= self.daily_requests or self.day_cost >= self.daily_budget:
-            mid = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
-            return False, "global", int((mid - datetime.now(timezone.utc)).total_seconds()) + 1
-        now = time.time()
-        q = self.hits[ip]
-        while q and q[0] < now - 86400:
-            q.popleft()
-        recent = [t for t in q if t > now - 3600]
-        if len(recent) >= self.per_hour:
-            return False, "ip", int(3600 - (now - max(recent))) + 1 if recent else 3600
-        if len(q) >= self.per_day:
-            return False, "ip", int(86400 - (now - q[0])) + 1
-        return True, None, 0
+        """Returns (allowed, blocked_scope, retry_after_seconds).
 
-    def record(self, ip: str, input_tokens: int, output_tokens: int) -> None:
-        self._roll_day()
-        self.hits[ip].append(time.time())
-        self.day_requests += 1
-        self.day_cost += input_tokens * PRICE_IN / 1e6 + output_tokens * PRICE_OUT / 1e6
-        if len(self.hits) > 5000:  # prune idle IPs
-            cutoff = time.time() - 86400
-            for k in [k for k, q in self.hits.items() if not q or q[-1] < cutoff]:
-                del self.hits[k]
+        Allowing RESERVES the slot immediately — the request counts whether
+        or not the downstream call succeeds.
+        """
+        with self._lock:
+            self._roll_day()
+            if self.day_requests >= self.daily_requests or self.day_cost >= self.daily_budget:
+                mid = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
+                return False, "global", int((mid - datetime.now(timezone.utc)).total_seconds()) + 1
+            now = time.time()
+            q = self.hits[ip]
+            while q and q[0] < now - 86400:
+                q.popleft()
+            recent = [t for t in q if t > now - 3600]
+            if len(recent) >= self.per_hour:
+                return False, "ip", int(3600 - (now - min(recent))) + 1 if recent else 3600
+            if len(q) >= self.per_day:
+                return False, "ip", int(86400 - (now - q[0])) + 1
+            q.append(now)
+            self.day_requests += 1
+            if len(self.hits) > 5000:  # prune idle IPs
+                cutoff = now - 86400
+                for k in [k for k, dq in self.hits.items() if not dq or dq[-1] < cutoff]:
+                    del self.hits[k]
+            return True, None, 0
+
+    def settle(self, input_tokens: int, output_tokens: int) -> None:
+        """Add the real cost of a completed call to the daily budget."""
+        with self._lock:
+            self._roll_day()
+            self.day_cost += input_tokens * PRICE_IN / 1e6 + output_tokens * PRICE_OUT / 1e6
 
 
 def client_ip(request) -> str:
-    """First X-Forwarded-For hop when behind a proxy, else the socket peer."""
+    """Last X-Forwarded-For hop (set by the trusted proxy in front of us) —
+    the first hop is client-supplied and trivially spoofable."""
     fwd = request.headers.get("x-forwarded-for")
     if fwd:
-        return fwd.split(",")[0].strip()
+        return fwd.split(",")[-1].strip()
     return request.client.host if request.client else "unknown"

@@ -125,8 +125,27 @@ def test_limiter_ip_window():
     from app.ratelimit import AskLimiter
     lim = AskLimiter()
     for _ in range(lim.per_hour):
-        lim.record("9.9.9.9", 100, 100)
+        ok, _, _ = lim.check("9.9.9.9")   # check() reserves the slot
+        assert ok
     ok, scope, _ = lim.check("9.9.9.9")
     assert not ok and scope == "ip"
     ok, _, _ = lim.check("8.8.8.8")
     assert ok
+
+
+def test_limiter_reserves_on_check():
+    # a failed downstream call must still consume the slot
+    from app.ratelimit import AskLimiter
+    lim = AskLimiter()
+    before = lim.day_requests
+    lim.check("7.7.7.7")
+    assert lim.day_requests == before + 1
+
+
+def test_client_ip_uses_last_forwarded_hop():
+    from app.ratelimit import client_ip
+
+    class Req:
+        headers = {"x-forwarded-for": "6.6.6.6, 10.0.0.1"}
+        client = None
+    assert client_ip(Req()) == "10.0.0.1"
