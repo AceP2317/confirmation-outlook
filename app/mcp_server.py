@@ -44,11 +44,11 @@ def get_register(category: str | None = None, plant: str | None = None,
 
 @mcp.tool()
 def get_root_cause(week: str | None = None) -> dict:
-    """Unconfirmed units by detailed cause for a week (default: latest)."""
+    """Unconfirmed units by detailed cause. Omit week for the latest; labels look like 'cw45 2025'."""
     return get_service().root_cause(week)
 
 
 @mcp.tool()
 def get_breakdown(week: str | None = None) -> dict:
-    """Unconfirmed units by plant / business field / supplier / category vs prior week."""
+    """Unconfirmed units by plant / business field / supplier / category vs prior week. Omit week for the latest; labels look like 'cw45 2025'."""
     return get_service().breakdown(week)

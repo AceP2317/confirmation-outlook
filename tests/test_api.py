@@ -81,6 +81,14 @@ def test_root_cause(client):
     assert u == sorted(u, reverse=True)
 
 
+def test_unknown_week_falls_back_to_latest(client):
+    latest = client.get("/api/health").json()["latestWeek"]
+    r = client.get("/api/root_cause?week=2024-W52").json()
+    assert r["week"] == latest and len(r["rows"]) > 0 and "note" in r
+    b = client.get("/api/breakdown?week=nonsense").json()
+    assert b["week"] == latest and "note" in b
+
+
 def test_breakdown(client):
     r = client.get("/api/breakdown").json()
     for dim in ["byPlant", "byBusinessField", "bySupplier", "byCategory"]:

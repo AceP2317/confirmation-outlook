@@ -136,15 +136,28 @@ class Service:
             "rows": top.to_dict("records"),
         })
 
+    def _resolve_week(self, week: str | None) -> tuple[str, str | None]:
+        """Unknown week labels fall back to the latest week with a note —
+        a silent empty result reads as 'no data' to both humans and LLMs."""
+        if not week or week == self.latest_week:
+            return self.latest_week, None
+        if week in set(self.trajectory["week"]):
+            return week, None
+        return self.latest_week, (f"unknown week '{week}' - showing {self.latest_week}; "
+                                  f"week labels look like '{self.latest_week}'")
+
     def root_cause(self, week: str | None = None) -> dict:
-        week = week or self.latest_week
+        week, note = self._resolve_week(week)
         conn = connect(self.db_path, ro=True)
         df = engine.root_cause(conn, week)
         conn.close()
-        return jsafe({"week": week, "rows": df.to_dict("records")})
+        out = {"week": week, "rows": df.to_dict("records")}
+        if note:
+            out["note"] = note
+        return jsafe(out)
 
     def breakdown(self, week: str | None = None) -> dict:
-        week = week or self.latest_week
+        week, note = self._resolve_week(week)
         conn = connect(self.db_path, ro=True)
         idx = read_frame(conn, "SELECT week_idx FROM weeks WHERE week = ?", (week,))
         prev = None
@@ -153,7 +166,10 @@ class Service:
                               (int(idx.iloc[0, 0]) - 1,)).iloc[0, 0]
         out = engine.breakdown(conn, week, prev)
         conn.close()
-        return jsafe({"week": week, "prev": prev, **out})
+        payload = {"week": week, "prev": prev, **out}
+        if note:
+            payload["note"] = note
+        return jsafe(payload)
 
     def health(self) -> dict:
         return jsafe({

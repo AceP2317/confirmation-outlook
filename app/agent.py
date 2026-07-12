@@ -35,9 +35,9 @@ TOOLS = [
          "category": {"type": "string"}, "plant": {"type": "string"},
          "supplier": {"type": "string"}, "recoverable": {"type": "boolean"},
          "min_prob": {"type": "number"}, "limit": {"type": "integer"}}}},
-    {"name": "get_root_cause", "description": "Unconfirmed units by detailed cause for a week.",
+    {"name": "get_root_cause", "description": "Unconfirmed units by detailed cause. Omit week for the latest; labels look like 'cw45 2025'.",
      "input_schema": {"type": "object", "properties": {"week": {"type": "string"}}}},
-    {"name": "get_breakdown", "description": "Unconfirmed units by plant, business field, supplier, category vs prior week.",
+    {"name": "get_breakdown", "description": "Unconfirmed units by plant, business field, supplier, category vs prior week. Omit week for the latest; labels look like 'cw45 2025'.",
      "input_schema": {"type": "object", "properties": {"week": {"type": "string"}}}},
 ]
 
