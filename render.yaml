@@ -1,0 +1,12 @@
+# Render blueprint: New + -> Blueprint -> select this repo -> Apply.
+# Free plan: 512 MB, spins down after ~15 min idle (interim host; cold wake ~30-60 s).
+services:
+  - type: web
+    name: confirmation-outlook
+    runtime: docker
+    plan: free
+    region: virginia
+    healthCheckPath: /api/health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # set in the dashboard; powers the Ask tab, everything else runs keyless

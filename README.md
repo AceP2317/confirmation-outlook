@@ -1,15 +1,3 @@
----
-title: Confirmation Outlook
-emoji: 📡
-colorFrom: yellow
-colorTo: gray
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
-short_description: Predictive order-confirmation demo — synthetic data, real engine
----
-
 # Confirmation Outlook — Northpoint Manufacturing
 
 A full-stack demo of a **predictive supply-chain tool**: instead of reporting last week's

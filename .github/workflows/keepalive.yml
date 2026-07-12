@@ -1,16 +1,16 @@
 name: keepalive
-# Free HF Spaces sleep after ~48h without a request; a recruiter clicking a
-# stale link would wait out a container start. A ping every 6 hours keeps the
-# Space hot (and the baked DB makes even a true cold start only seconds).
+# Interim host (Render free) spins down after ~15 min idle; a 10-min ping keeps
+# it warm during US waking hours so a recruiter click lands on a live app.
+# Off-hours it sleeps (fine - the baked DB makes a cold wake short).
 # NOTE: GitHub pauses scheduled workflows after ~60 days of repo inactivity —
-# any commit re-arms it.
+# any commit re-arms it. Retarget or remove when the demo moves to the VPS.
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "*/10 11-23 * * *"   # every 10 min, 11:00-23:59 UTC (~7am-7pm US Eastern)
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - run: curl -sS --max-time 60 https://ianpro42086-confirmation-outlook.hf.space/api/health || true
+      - run: curl -sS --max-time 60 https://confirmation-outlook.onrender.com/api/health || true
