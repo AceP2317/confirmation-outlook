@@ -4,7 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Confirmation Outlook — Northpoint Manufacturing (demo)</title>
-    <meta name="description" content="Predictive order-confirmation demo on synthetic data. Built by Ian Provencher." />
+    <meta name="description" content="Which orders miss their date next week — measured, not modeled. A Python risk engine, a real API, and an operator console, on 100% synthetic data. Built by Ian Provencher." />
+
+    <!--
+      Social preview. og:image MUST be absolute — a relative path renders a blank
+      card. og.png ships through the Vite build into web/dist, which the same
+      uvicorn process serves, so there is no second asset host to keep alive.
+      The ?v= is a cachebust: LinkedIn pins og:image by URL for about a week, so
+      bump it whenever the card art changes, and run the Post Inspector BEFORE
+      posting rather than after.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Confirmation Outlook" />
+    <meta property="og:url" content="https://demo.appliediqsolutions.com/" />
+    <meta property="og:title" content="Which orders miss next week — measured, not modeled." />
+    <meta property="og:description" content="A supply-chain risk service built end to end: Python engine, real API, MCP server, React console. Every probability is a measured frequency — no fitted model. 42 assertions gate the build." />
+    <meta property="og:image" content="https://demo.appliediqsolutions.com/og.png?v=1" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Confirmation Outlook — the measured risk table: P(fails next week) over 26,400 observed transitions." />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Which orders miss next week — measured, not modeled." />
+    <meta name="twitter:description" content="A supply-chain risk service built end to end: Python engine, real API, MCP server, React console. 42 assertions gate the build." />
+    <meta name="twitter:image" content="https://demo.appliediqsolutions.com/og.png?v=1" />
   </head>
   <body>
     <div id="root"></div>
