@@ -157,3 +157,30 @@ def test_client_ip_uses_last_forwarded_hop():
         headers = {"x-forwarded-for": "6.6.6.6, 10.0.0.1"}
         client = None
     assert client_ip(Req()) == "10.0.0.1"
+
+
+def test_client_ip_prefers_cf_connecting_ip_when_trusted(monkeypatch):
+    """Behind the tunnel the edge is the only route in, so CF-Connecting-IP
+    is authoritative — and it must beat XFF, whose last hop is cloudflared."""
+    from app.ratelimit import client_ip
+    monkeypatch.setenv("TRUST_CF_CONNECTING_IP", "1")
+
+    class Req:
+        headers = {"cf-connecting-ip": "203.0.113.7",
+                   "x-forwarded-for": "6.6.6.6, 10.0.0.1"}
+        client = None
+    assert client_ip(Req()) == "203.0.113.7"
+
+
+def test_client_ip_ignores_spoofed_cf_header_when_untrusted(monkeypatch):
+    """On a directly-reachable host, a visitor who sends CF-Connecting-IP must
+    NOT get a fresh rate-limit bucket. This is the money test: without it, the
+    per-IP cap on the paid Ask endpoint is trivially evaded."""
+    from app.ratelimit import client_ip
+    monkeypatch.delenv("TRUST_CF_CONNECTING_IP", raising=False)
+
+    class Req:
+        headers = {"cf-connecting-ip": "203.0.113.7",
+                   "x-forwarded-for": "6.6.6.6, 10.0.0.1"}
+        client = None
+    assert client_ip(Req()) == "10.0.0.1"

@@ -76,8 +76,22 @@ class AskLimiter:
 
 
 def client_ip(request) -> str:
-    """Last X-Forwarded-For hop (set by the trusted proxy in front of us) —
-    the first hop is client-supplied and trivially spoofable."""
+    """The real client IP, per deployment topology.
+
+    TRUST_CF_CONNECTING_IP=1 is set ONLY where Cloudflare's edge is the sole
+    route in (the AppliedIQ box: zero inbound ports, cloudflared tunnel only).
+    There the edge sets CF-Connecting-IP and OVERWRITES any client-supplied
+    value, so it cannot be forged. NEVER set the flag on a directly-reachable
+    host: a visitor could simply send the header and mint a fresh bucket per
+    request, evading the per-IP cap on an endpoint that spends real money.
+
+    Fallback is the LAST X-Forwarded-For hop — what a trusted proxy appends;
+    the earlier hops are client-supplied and trivially spoofable.
+    """
+    if os.environ.get("TRUST_CF_CONNECTING_IP") == "1":
+        cf = request.headers.get("cf-connecting-ip")
+        if cf:
+            return cf.strip()
     fwd = request.headers.get("x-forwarded-for")
     if fwd:
         return fwd.split(",")[-1].strip()

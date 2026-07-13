@@ -51,6 +51,23 @@ def health():
     return get_service().health()
 
 
+@app.get("/api/whoami")
+def whoami(request: Request):
+    """What the Ask limiter sees as your IP. Free — no model call.
+
+    Reflects only the caller's own IP back to the caller, so it leaks nothing.
+    It exists to prove, on a new deployment, that per-IP bucketing is real:
+    that the limiter resolves a true client IP rather than collapsing every
+    visitor into one bucket, and that a forged CF-Connecting-IP loses.
+    """
+    return {
+        "ip": client_ip(request),
+        "cfConnectingIp": request.headers.get("cf-connecting-ip"),
+        "xForwardedFor": request.headers.get("x-forwarded-for"),
+        "peer": request.client.host if request.client else None,
+    }
+
+
 @app.get("/api/headline")
 def headline():
     return get_service().headline()
