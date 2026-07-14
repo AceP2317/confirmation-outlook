@@ -259,69 +259,122 @@
   </section>
 
   <section class="block">
-    <h2>Every number and word on the dashboard, explained</h2>
+    <h2>Every symbol, number, variable, and equation, explained</h2>
     <p>
-      The sections above cover the big picture. Below is everything else the live dashboard
-      shows, grouped by where you'll see it, so nothing on screen is left a mystery.
+      Everything below is grouped by kind rather than by tab, so it doubles as a lookup table.
+      Symbols are the visual marks on screen; numbers are the fixed thresholds every measurement
+      gets checked against; variables are the named states a part can be in; equations are the
+      actual math, written out in plain words first and then as the literal formula.
     </p>
 
     <details>
-      <summary>Words and symbols used everywhere on the dashboard</summary>
+      <summary>Symbols</summary>
       <div class="body">
-        <p>
-          <b>Dispersion band vs. a confidence interval.</b> The shaded band on the trajectory
-          chart is just the average of the last 12 weeks plus and minus one "typical wobble"
-          (statisticians call this a standard deviation). It describes how much the number has
-          bounced around in the past. It is not a formal guarantee about next week, the way a
-          weather forecaster's "70% chance of rain" is. Northpoint is upfront about that
-          difference rather than dressing the band up as more certain than it is.
-        </p>
-        <p>
-          <b>Autocorrelation.</b> A single number (shown as 0.06 above) for "how much does this
-          week's percentage predict next week's." It runs from 0 (no relationship at all) to 1
-          (next week is basically the same as this week). At 0.06, the weekly rate is close to
-          having no memory, which is exactly why the tool doesn't try to forecast it directly.
-        </p>
-        <p>
-          <b>MAPE</b> stands for Mean Absolute Percentage Error: on average, how far off a
-          forecast number tends to be, stated as a percent. A MAPE of 13% means the volume
-          forecast is typically about 13% away from what actually happened, in either direction.
-        </p>
-        <p>
-          <b>Lift</b> is a ratio, not a percentage. If quiet parts fail 2% of the time and flagged
-          parts fail 20% of the time, that's a 10&times; lift: flagged parts fail ten times as
-          often. It's the tool's way of saying "how much more this warning sign actually matters,"
-          separate from the raw odds themselves.
-        </p>
-        <p>
-          <b>The &dagger; symbol</b> next to a part number in the at-risk register means that part
-          is past its official end-of-sale date: it's a "structural" case with no fix left to try.
-        </p>
-        <p>
-          <b>Solid vs. hatched (striped) bars.</b> In the register's "Impact" column, a solid
-          amber bar is a real, measured number (units already unconfirmed today). A hatched,
-          striped bar is an estimate for a part that hasn't failed yet, an early-warning proxy, not
-          a hard count. The two are drawn differently on purpose so they're never mistaken for the
-          same kind of number.
+        <p><b>&dagger;</b> next to a part number means that part is past its official end-of-sale date: "structural," no fix left to try.</p>
+        <p><b>&#9650; / &#9660; / &#9644;</b> (red up, green down, gray flat) next to a category or plant bar show whether this week's number moved more than 5% versus last week, in either direction, or held roughly flat.</p>
+        <p><b>+ / &minus;</b> is the open/close mark on every drillable section like this one.</p>
+        <p><b>The small circled "?"</b> next to a label on the live dashboard is a hover tooltip: point at it for a one-line plain-English definition, right where you need it.</p>
+        <p><b>Solid vs. hatched (striped) bars</b> in the register's "Impact" column: solid amber is a real, measured number (units already unconfirmed today); a hatched, striped bar is an estimate for a part that hasn't failed yet, an early-warning proxy, not a hard count. Drawn differently on purpose so they're never mistaken for the same kind of number.</p>
+        <p><b>&times;</b> after a number (like "10&times;") always means a ratio, not a percentage: "ten times as often," not "ten percent."</p>
+        <p><b>"n="</b> in a tooltip states the sample size behind a percentage, for example "n=1,234" means that percentage was counted over 1,234 historical examples. More examples behind a number means it can be trusted more.</p>
+        <p><b>Darker amber shading</b> on the risk-table heatmap means a higher measured chance of failure; the darkest cells also flip their text to a higher-contrast color once the risk passes 45%, purely so the number stays readable.</p>
+        <p><b>&#9728; / &#9789;</b> (sun / moon) toggles the page between light and dark.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Numbers (fixed thresholds and limits)</summary>
+      <div class="body">
+        <p><b>95%</b> is Northpoint's confirmation-rate target.</p>
+        <p><b>42</b> is the number of automatic checks ("assertions") the tool must pass on every build before it's allowed to publish a single number.</p>
+        <p><b>50</b> is the minimum number of historical examples a detailed, three-signal risk percentage needs before it's trusted; below that, the tool quietly falls back to a simpler, two-signal percentage that has more examples behind it.</p>
+        <p><b>60</b> is the size of the "worklist," the top-ranked group of recoverable parts used to score how often the highest-priority flags are actually right.</p>
+        <p><b>15% and 50%</b> are the confidence-tier cut points: Watch is below 15%, Medium is 15% up to 50%, High is 50% and above.</p>
+        <p><b>50% forecast accuracy</b> is the line below which a part is flagged "forecast-weak."</p>
+        <p><b>One month of stock coverage</b> is the line below which a part is flagged "coverage-thin."</p>
+        <p><b>88% to 96%</b> is the trajectory chart's fixed vertical scale, a deliberate zoom-in so week-to-week wobble is visible at all (on a full 0-100% scale it would look like a flat line).</p>
+        <p><b>0.35</b> is the "memoryless" cutoff: below this autocorrelation score, the tool treats the weekly percentage as having no real memory and doesn't try to forecast it directly.</p>
+        <p><b>400</b> is how many register rows show on screen at once, for speed; exporting to Excel is never capped.</p>
+        <p><b>5 questions per hour per visitor</b>, plus a small shared daily budget, is the Ask tab's limit on this free public demo. Hitting it shows "rate limited"; a missing API key on this particular deployment shows "offline" (every other tab still works without one).</p>
+        <p><b>12 distribution centers (DCs)</b> exist in total; the plant-concentration chart shows the top 6 by unconfirmed volume.</p>
+        <p><b>T+1 through T+4</b>: the horizon chart looks exactly one to four weeks ahead, no further.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Variables (named states and terms)</summary>
+      <div class="body">
+        <p><b>Failing</b>: this part already has unconfirmed units this week.</p>
+        <p><b>Receipt-short ("short")</b>: this part's incoming supply doesn't cover what's been ordered.</p>
+        <p><b>Stressed</b>: at least one of three warning flags is up for this part (forecast-weak, coverage-thin, or on the end-of-sale list).</p>
+        <p><b>Structural</b>: past end-of-sale, so there's no recovery lever left to pull.</p>
+        <p><b>Recoverable</b>: not structural, meaning there's still a real fix available.</p>
+        <p><b>Emerging</b>: hasn't failed yet, but is showing a warning sign, so it earns a spot on the register ahead of time.</p>
+        <p><b>Confidence tier</b>: Watch, Medium, or High, read directly off the measured risk percentage (see the Numbers group above for the cut points).</p>
+        <p><b>P(fail) / risk probability</b>: the measured chance a part misses confirmation next week.</p>
+        <p><b>Expected units</b>: risk probability multiplied by units currently at stake, the number that actually ranks the to-do list.</p>
+        <p><b>Shortfall</b>: a forward-looking estimate of exposure for a part that hasn't failed yet, kept on a deliberately separate scale from expected units so the two are never blended.</p>
+        <p><b>Category / cause</b>: which of five reasons a miss is attributed to: Supply (a part is missing or delayed from a supplier), Forecasting (the demand plan was wrong), Logistics (a shipping or transit problem), Customer (the customer changed, held, or blocked the order), or Other (a catch-all, including parts already past end-of-sale). Right now Supply is the biggest driver at roughly 5,900 unconfirmed units, with the other four each in the 1,100 to 1,600 range.</p>
+        <p><b>DC</b>: Distribution Center, a warehouse or plant. Right now DC D01 alone carries roughly 4,300 unconfirmed units, more than double the next-largest, a real, common supply-chain pattern where a handful of locations carry most of the risk.</p>
+        <p><b>Lever</b>: the suggested fix, one of five fixed options tied to cause (see the Equations group below for the full cascade).</p>
+        <p><b>Persistence floor</b>: how often already-failing parts simply fail again.</p>
+        <p><b>Leading signal</b>: how much more often a receipt-short (but not-yet-failing) part fails next week, versus a quiet one.</p>
+        <p><b>Recall</b>: of all the parts that actually failed, what share the tool had already flagged in advance.</p>
+        <p><b>Precision</b>: of the flagged worklist, what share actually did fail.</p>
+        <p><b>MAPE</b>: Mean Absolute Percentage Error, the typical size of a forecasting miss, stated as a percent.</p>
+        <p><b>Dispersion band</b>: the mean &plusmn; one standard deviation range shown on the trajectory chart (see "dispersion vs. confidence interval" in the Equations group).</p>
+        <p><b>Autocorrelation</b>: a 0-to-1 score for how much this week's number predicts next week's.</p>
+        <p><b>Exposure</b>: units at stake, not dollars.</p>
+        <p><b>Supplier</b>: Local or Overseas, whether a part's supplier is nearby or across an ocean.</p>
+
+        <p style="margin-top:16px;"><b>The register's six filters, in plain words:</b></p>
+        <div class="tabgrid">
+          <div class="tabcard"><div class="name">Cause</div><div class="desc">Narrow to one of the five categories above.</div></div>
+          <div class="tabcard"><div class="name">DC</div><div class="desc">Narrow to one specific warehouse, D01 through D12.</div></div>
+          <div class="tabcard"><div class="name">Supplier</div><div class="desc">Local or Overseas.</div></div>
+          <div class="tabcard"><div class="name">Recoverable</div><div class="desc">Show everything, only fixable parts, or only structural lost causes.</div></div>
+          <div class="tabcard"><div class="name">Confidence tier</div><div class="desc">Show only Watch, Medium, or High risk parts.</div></div>
+          <div class="tabcard"><div class="name">Minimum probability</div><div class="desc">Type 0 to 1 (0% to 100%) to hide anything below that risk level.</div></div>
+        </div>
+        <p style="margin-top:16px;"><b>The register's columns, in plain words:</b></p>
+        <div class="tabgrid">
+          <div class="tabcard"><div class="name">Material</div><div class="desc">The part number. A &dagger; means past end-of-sale.</div></div>
+          <div class="tabcard"><div class="name">DC / Supplier / Cause</div><div class="desc">Which warehouse, supplier type, and category.</div></div>
+          <div class="tabcard"><div class="name">Unconf</div><div class="desc">Units unconfirmed right now, only if already failing.</div></div>
+          <div class="tabcard"><div class="name">P(fail)</div><div class="desc">The measured chance this part misses confirmation next week.</div></div>
+          <div class="tabcard"><div class="name">Expected</div><div class="desc">Risk chance &times; units at stake.</div></div>
+          <div class="tabcard"><div class="name">Impact</div><div class="desc">A bar version of Expected: solid means measured, hatched means estimated.</div></div>
+          <div class="tabcard"><div class="name">Tier</div><div class="desc">Watch, Medium, High, or structural.</div></div>
+          <div class="tabcard"><div class="name">Why</div><div class="desc">Click to expand the plain-English reason for that row.</div></div>
+        </div>
+        <p style="margin-top:16px;">
+          <b>Exporting.</b> "Export view" downloads exactly what's on screen after your filters;
+          "Export full register" downloads every flagged part regardless of filters and is never
+          capped at 400 rows.
         </p>
       </div>
     </details>
 
     <details>
-      <summary>Everything on the Outlook tab</summary>
+      <summary>Equations</summary>
       <div class="body">
-        <p>
-          <b>The trajectory chart's scale.</b> The chart's vertical axis only runs from 88% to
-          96%, not 0% to 100%. That's a deliberate zoom-in so the week-to-week wobble is visible
-          at all; on a full 0 to 100% scale, a normal week's ups and downs would look like a flat
-          line.
-        </p>
-        <p>
-          <b>The risk table has a hidden third layer.</b> The four big cells you see (quiet/fine,
-          quiet/short, failing/fine, failing/short) actually hide a further split when you hover:
-          whether the part also has another stress flag up (a weak forecast, thin stock, or being
-          near end-of-sale). Splitting it out shows that stress makes every single bucket worse:
-        </p>
+        <p><b>Confirmation rate.</b> Confirmed units divided by all ordered units (confirmed plus unconfirmed), as a percent.</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">rate = 100 &times; confirmed &divide; (confirmed + unconfirmed)</p>
+        <p><b>Week-over-week trend.</b> Up if this week is more than 5% above last week, down if more than 5% below, otherwise flat.</p>
+        <p><b>Expected units.</b> Risk probability times how many units are on the line right now.</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">expected units = risk % &times; unconfirmed units</p>
+        <p><b>Confidence tier.</b> The risk probability sorted into three buckets: Watch below 15%, Medium from 15% up to 50%, High at 50% and above.</p>
+        <p><b>Lift.</b> How many times more often flagged parts fail than unflagged ones.</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">lift = P(fail | flag) &divide; P(fail | no flag)</p>
+        <p><b>The four-bucket risk table</b>, a worked example of the lift equation: every part's chance of failing next week, measured by counting what actually happened to parts in the same situation before.</p>
+        <table class="buckets">
+          <tr><th>Situation</th><th>Chance of trouble next week</th></tr>
+          <tr class="lo"><td>Quiet, supply fine</td><td class="p">1.9%</td></tr>
+          <tr class="mid"><td>Quiet, supply running short</td><td class="p">17.9%</td></tr>
+          <tr class="hi"><td>Already a problem, supply fine</td><td class="p">53.6%</td></tr>
+          <tr class="hi"><td>Already a problem, supply running short</td><td class="p">89.3%</td></tr>
+        </table>
+        <p>That same table gets one layer more detailed when a third question (any other stress flag up?) is added:</p>
         <table class="buckets">
           <tr><th>Situation</th><th>Chance of trouble next week</th></tr>
           <tr class="lo"><td>Quiet, supply fine, no other warning flags</td><td class="p">0.7%</td></tr>
@@ -333,22 +386,15 @@
           <tr class="hi"><td>Already a problem and supply short, no other flags</td><td class="p">85.5%</td></tr>
           <tr class="hi"><td>Already a problem, supply short, another flag up</td><td class="p">96.9%</td></tr>
         </table>
-        <p>
-          <b>The three extra warning signs</b> ("what else adds signal" chart), each measured on
-          its own against a clean, quiet book of parts:
-        </p>
+        <p>Below 50 examples behind a detailed cell, the tool falls back to the simpler four-bucket version above it, which always has more examples behind it.</p>
+        <p><b>The three extra warning signs</b>, each measured on its own against a clean, quiet book of parts:</p>
         <table class="buckets">
           <tr><th>Warning sign</th><th>Makes a miss this much more likely</th></tr>
-          <tr class="mid"><td>Forecast accuracy below 50% (the demand plan has been running far off actuals)</td><td class="p">7.0&times;</td></tr>
+          <tr class="mid"><td>Forecast accuracy below 50%</td><td class="p">7.0&times;</td></tr>
           <tr class="mid"><td>Stock coverage below one month of demand</td><td class="p">6.9&times;</td></tr>
           <tr class="hi"><td>On the end-of-sale list</td><td class="p">21.7&times;</td></tr>
         </table>
-        <p>
-          <b>How far ahead the early-warning sign reaches</b> (the T+1 through T+4 chart). "T+1"
-          means one week from now, "T+4" means four weeks out. The sign is strongest close in and
-          fades the further out you look, which makes sense: a warning sign from a month ago says
-          less about right now than one from last week.
-        </p>
+        <p><b>How far ahead the early-warning sign reaches</b>, the same lift equation measured at each horizon:</p>
         <table class="buckets">
           <tr><th>Weeks ahead</th><th>How much more likely a short part fails</th></tr>
           <tr class="hi"><td>1 week (T+1)</td><td class="p">9.5&times;</td></tr>
@@ -356,89 +402,39 @@
           <tr class="mid"><td>3 weeks (T+3)</td><td class="p">6.7&times;</td></tr>
           <tr class="lo"><td>4 weeks (T+4)</td><td class="p">5.7&times;</td></tr>
         </table>
-        <p>
-          <b>The five "cause" categories</b> (used in the volume-by-cause chart, the register's
-          "Cause" column, and its filter): <b>Supply</b> (a part is missing or delayed from a
-          supplier), <b>Forecasting</b> (the demand plan for that part was wrong), <b>Logistics</b>
-          (a shipping or transit problem getting the part where it needs to go), <b>Customer</b>
-          (the customer changed, held, or blocked the order), and <b>Other</b> (a catch-all,
-          including parts already past end-of-sale). Right now Supply is the biggest driver at
-          roughly 5,900 unconfirmed units, with Customer, Logistics, Forecasting, and Other each in
-          the 1,100 to 1,600 range.
-        </p>
-        <p>
-          <b>"DC" means Distribution Center</b>: a warehouse or plant that ships parts. Northpoint
-          has 12 of them (D01 through D12); the concentration chart shows the top 6. Right now DC
-          D01 alone carries roughly 4,300 unconfirmed units, more than double the next-largest
-          (D02 at about 1,300), which is a real, common supply-chain pattern: a handful of
-          locations usually carry most of the risk, rather than it being spread evenly.
-        </p>
+        <p><b>The lever cascade.</b> Every flagged part gets exactly one fix, chosen in this order: past end-of-sale &rarr; "reallocate, no recovery lever"; else receipt-short &rarr; "expedite inbound receipt / PO follow-up"; else forecast-weak &rarr; "correct the demand plan for this material"; else coverage-thin &rarr; "rebuild safety stock / raise coverage"; else &rarr; "review order book with the customer team."</p>
+        <p><b>Persistence floor.</b> Of parts already failing this week, what share fail again next week, no early-warning skill required.</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">floor = (failing parts that recur) &divide; (all currently-failing parts)</p>
+        <p><b>Net recall.</b> Of every part that actually failed, what share had already been flagged.</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">recall = (flagged parts that failed) &divide; (all parts that failed)</p>
+        <p><b>Worklist precision.</b> Of the top 60 flagged parts by expected units, what share actually failed.</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">precision = (top 60 that failed) &divide; 60</p>
+        <p><b>The volume forecast.</b> Start with a simple estimate: for every currently-failing part, its risk probability times its current unconfirmed units, all added up. Then stretch that number upward, because history shows a predictable share of next week's total trouble comes from parts that haven't failed before at all, not just repeats of today's problems. The stretch factor is one divided by (one minus that historical "brand-new" share).</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">volume forecast = (simple estimate) &divide; (1 &minus; historical share of brand-new failures)</p>
+        <p><b>Dispersion band vs. a confidence interval.</b> The shaded band on the trajectory chart is the average of the last 12 weeks, plus and minus one "typical wobble" (a standard deviation). It describes how much the number has bounced around in the past; it is not a formal statistical guarantee about next week, the way a weather forecaster's "70% chance of rain" is.</p>
+        <p class="mono" style="font-size:14px; padding:8px 10px; background:var(--panel); border-radius:3px;">band = mean &plusmn; 1 standard deviation (12 weeks)</p>
+        <p><b>Autocorrelation / "memoryless."</b> A single 0-to-1 score for how much this week's percentage predicts next week's; near 0 means next week is close to a coin flip regardless of this week's result. Northpoint measures 0.06, so the tool treats the headline rate as having no useful memory and predicts individual parts instead.</p>
       </div>
     </details>
 
     <details>
-      <summary>Everything on the At-risk register tab</summary>
-      <div class="body">
-        <p><b>The six filters, in plain words:</b></p>
-        <div class="tabgrid">
-          <div class="tabcard"><div class="name">Cause</div><div class="desc">Narrow to one of the five categories above (Supply, Forecasting, Logistics, Customer, Other).</div></div>
-          <div class="tabcard"><div class="name">DC</div><div class="desc">Narrow to one specific warehouse, D01 through D12.</div></div>
-          <div class="tabcard"><div class="name">Supplier</div><div class="desc">Local or Overseas: whether the part's supplier is nearby or across an ocean.</div></div>
-          <div class="tabcard"><div class="name">Recoverable</div><div class="desc">Show everything, only the parts with a real fix left, or only the structural lost causes.</div></div>
-          <div class="tabcard"><div class="name">Confidence tier</div><div class="desc">Show only Watch, Medium, or High risk parts (see the tier thresholds below).</div></div>
-          <div class="tabcard"><div class="name">Minimum probability</div><div class="desc">Type a number from 0 to 1 (0% to 100%) to hide anything below that risk level.</div></div>
-        </div>
-        <p><b>The table columns, in plain words:</b></p>
-        <div class="tabgrid">
-          <div class="tabcard"><div class="name">Material</div><div class="desc">The part number. A &dagger; means it's already past end-of-sale.</div></div>
-          <div class="tabcard"><div class="name">DC / Supplier / Cause</div><div class="desc">Which warehouse, which kind of supplier, and which of the five categories it falls under.</div></div>
-          <div class="tabcard"><div class="name">Unconf</div><div class="desc">Units unconfirmed right now, only shown if the part is already failing.</div></div>
-          <div class="tabcard"><div class="name">P(fail)</div><div class="desc">The measured chance this part misses confirmation next week.</div></div>
-          <div class="tabcard"><div class="name">Expected</div><div class="desc">Risk chance &times; units at stake, the number that actually ranks the list.</div></div>
-          <div class="tabcard"><div class="name">Impact</div><div class="desc">A bar version of Expected: solid means measured, hatched means an early-warning estimate.</div></div>
-          <div class="tabcard"><div class="name">Tier</div><div class="desc">Watch, Medium, High, or structural (see thresholds below).</div></div>
-          <div class="tabcard"><div class="name">Why</div><div class="desc">Click to expand the plain-English reason that specific part was flagged.</div></div>
-        </div>
-        <p>
-          <b>Confidence tier thresholds:</b> <b>High</b> is 50% risk or higher, <b>Medium</b> is
-          15% up to 50%, and <b>Watch</b> is anything below 15%. These are measured percentages
-          from the counting table above, not a model's opinion.
-        </p>
-        <p>
-          <b>"Emerging"</b> describes a part that hasn't failed yet but is showing a warning sign
-          (receipt-short or stressed) and so has earned a spot on the register anyway, ahead of
-          time.
-        </p>
-        <p>
-          <b>The five fixes ("lever"), one per cause:</b> a structural part gets "reallocate, no
-          recovery lever" (there's genuinely nothing left to do); a receipt-short part gets
-          "expedite inbound receipt / PO follow-up" (chase the shipment); a weak-forecast part
-          gets "correct the demand plan for this material"; a thin-coverage part gets "rebuild
-          safety stock / raise coverage"; everything else gets "review order book with the
-          customer team."
-        </p>
-        <p>
-          <b>Exporting.</b> "Export view" downloads exactly what's on screen after your filters;
-          "Export full register" downloads every flagged part regardless of filters. The on-screen
-          table itself is capped at 400 rows for speed, but exports are never truncated.
-        </p>
-      </div>
-    </details>
-
-    <details>
-      <summary>Everything on the Ask tab</summary>
+      <summary>How the practice data itself was built (hidden from the tool)</summary>
       <div class="body">
         <p>
-          Ask answers questions by calling the same live tools that power every other number on
-          this site (the same register, the same headline stats). It never makes numbers up or
-          answers from general knowledge; if it can't find something with those tools, it says so.
+          Everything above is what the <i>tool</i> computes, live, from data it's allowed to see.
+          The practice data itself was built by a separate, one-time generator that works from its
+          own hidden rulebook, deliberately kept away from the tool being tested. In broad
+          strokes: a hidden table decides how likely each fake part is to fail next week based on
+          its current state; the receipt-short warning sign is "sticky," meaning once a part goes
+          short it's very likely to stay short the next week too, the way real supply problems tend
+          to persist rather than resolve overnight; and two of the twelve fake warehouses are
+          deliberately made more failure-prone than the rest, so the concentration pattern the tool
+          finds (a few locations carrying most of the risk) isn't an accident, it's a pattern
+          planted on purpose for the tool to go and rediscover honestly.
         </p>
         <p>
-          Because this is a free public demo, questions are capped at <b>5 per hour per
-          visitor</b>, plus a small shared daily budget across all visitors. If you see "rate
-          limited," you've hit one of those caps and just need to wait a bit. If you see "offline,"
-          it means this particular deployment doesn't have an API key configured; every other tab
-          still works normally without one.
+          The complete recipe, every statistical parameter used to build the practice world, is
+          written up in full in the <a href="https://github.com/AceP2317/confirmation-outlook/blob/main/docs/METHODOLOGY.md" target="_blank" rel="noopener noreferrer">technical methodology document</a>.
         </p>
       </div>
     </details>

@@ -142,6 +142,7 @@ body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 3px;
   border: 1px solid var(--line); background: var(--surface); color: var(--ink);
   padding: 6px 12px; transition: border-color 150ms var(--ease), background 150ms var(--ease);
+  text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
 }
 .np-btn:hover { border-color: var(--amber-deep); }
 .np-btn.primary { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }

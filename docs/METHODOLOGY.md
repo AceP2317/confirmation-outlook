@@ -138,3 +138,241 @@ produce identical numbers.
   above) would ride an ERP connector (see "ERP" above) in a production deployment.
 - The Ask tab answers only from live tool results and is hard-capped (rate-limited: 5 questions
   per hour per visitor, plus a shared daily budget) because this is a public endpoint.
+
+## 6. Full technical reference: every constant, formula, and threshold
+
+Sections 1-5 tell the story. This section is the complete reference underneath it: every named
+constant, every formula exactly as coded, and every one of the 42 build-time assertions, so
+nothing in the codebase's math is left undocumented anywhere.
+
+<details>
+<summary><b>6.1 Generator internals (planted ground truth, never read by the engine)</b></summary>
+
+Everything in this subsection shapes the *practice data*, not the tool's live math. It is
+generator-internal by design (see "hazard table" in the glossary above) — the engine only ever
+sees the same `order_lines` and signal columns a real system would expose, and `selfcheck.py`
+mechanically greps the serving code to prove none of this is read directly (§4, "no-peeking
+grep"). It's documented here in full for transparency, not because the tool depends on a reader
+knowing it.
+
+**Constants** (`app/generate.py`, the `CONFIG` dict):
+
+| Constant | Value | What it controls |
+|---|---|---|
+| `seed` | 20250834 | Seeds the entire random generator; same seed always produces the same world |
+| `n_materials` | 2,400 | Synthetic materials simulated |
+| `n_weeks` | 12 | Recorded weeks (the last is the held-out validation week) |
+| `burn_in` | 8 | Unrecorded warm-up weeks so week 1 starts mid-stream, not from a cold start |
+| `p_stay_short` | 0.85 | 85% chance a receipt-short material is still short next week |
+| `p_go_short` | 0.026 | Baseline 2.6% chance a fine material goes short next week |
+| `strained_plant_factor` | 1.6× | Multiplier on `p_go_short` for two deliberately strained plants (see below) |
+| `share_forecast_weak` | 10% | Share of materials with a chronically weak forecast |
+| `share_coverage_thin` | 8% | Share of materials with chronically thin stock coverage |
+| `share_eos` | 5% | Share of materials on the end-of-sale list |
+| `hazard_forecast_weak` | 0.035 | Stress-hazard contribution from a weak forecast alone |
+| `hazard_coverage_thin` | 0.04 | Stress-hazard contribution from thin coverage alone |
+| `hazard_eos` | 0.12 | Stress-hazard contribution from end-of-sale alone |
+| `demand_risk_boost` | 0.5 | Boost coefficient applied only to quiet (not-yet-failing) materials, scaled by demand size |
+| `persist_size_boost` | 0.30 | Boost coefficient applied only to already-failing materials, scaled by failure size |
+| `demand_mu` / `demand_sigma` | 2.6 / 1.6 | Lognormal parameters for each material's base weekly demand |
+| `demand_week_noise` | 0.20 | Lognormal sigma for week-to-week demand noise |
+| `severity_a` / `severity_b` | 4.0 / 2.0 | Beta-distribution parameters for a failing material's base unconfirmed share |
+| `severity_week_sigma` | 0.25 | Lognormal sigma for the independent weekly "shock" that keeps the headline rate memoryless |
+| `share_overseas` | 30% | Share of materials assigned an overseas supplier |
+
+**The planted hazard table**, keyed by (failing now, receipt-short, stressed) as 0/1:
+
+| failing | short | stressed | Planted weekly failure chance |
+|---|---|---|---|
+| 0 | 0 | 0 | 0.5% |
+| 0 | 0 | 1 | computed dynamically (see `stress_hazard` below) |
+| 0 | 1 | 0 | 13% |
+| 0 | 1 | 1 | 22% |
+| 1 | 0 | 0 | 36% |
+| 1 | 0 | 1 | 48% |
+| 1 | 1 | 0 | 68% |
+| 1 | 1 | 1 | 78% |
+
+Note this is the *planted* table used to build the practice data, not the *measured* table the
+engine recovers empirically (shown in the earlier sections and on the dashboard) — §4's "measured
+cells within 35%" assertion is exactly what ties the two together: the engine has to rediscover
+something close to this table using only observed outcomes, with no access to it directly.
+
+**Key formulas, exactly as coded:**
+
+- `stress_hazard` (used only for the `(0,0,1)` cell above): the *maximum* of whichever stress
+  flags are set (`0.035` if forecast-weak, `0.04` if coverage-thin, `0.12` if end-of-sale), not a
+  sum — the worst single flag dominates rather than stacking additively. If none apply, it falls
+  back to the `(0,0,0)` baseline of 0.5%.
+- Zipf plant weighting: `weight ∝ rank^-1.15`, normalized across the 12 plants, ranked 1 to 12.
+  This is what makes plant volume concentrate on its own rather than being scripted.
+- Strained-plant multiplier: exactly two of the twelve plants (`D01`, `D03`) get
+  `p_go_short × 1.6` instead of the baseline `p_go_short` — 4.16% instead of 2.6% per week.
+- Demand-linked boost: `hazard *= 1 + 0.5 × demand_percentile`, applied only to quiet
+  (not-yet-failing) materials — busier materials strain supply more.
+- Persistence-size boost: `hazard *= 1 + 0.30 × failure_size_percentile`, applied only to
+  already-failing materials, ranked by (base severity × base demand) as a proxy for how big the
+  failure is. A material never receives both boosts in the same week.
+- Hazard ceiling: every weekly failure chance is capped at 97%, regardless of boosts. Once the
+  hazard has been decided, whether a material actually fails that week is a coin flip weighted
+  by that hazard.
+- Base weekly demand: `lognormal(mean=2.6, sigma=1.6)`, clipped to [1, 4,000] units.
+- Weekly severity (the unconfirmed share of a failing material): a base draw from
+  `Beta(4.0, 2.0)` per material, multiplied by an independent weekly "shock" of
+  `lognormal(0, sigma=0.25)`, clipped to [5%, 98%] — the shock is what keeps the headline rate
+  memoryless even though the *set* of failing materials persists.
+- Order-line split: each material's weekly demand is split into 1-8 order lines via a
+  symmetric Dirichlet distribution (equal weight per line), with the number of lines drawn
+  from a Poisson process capped at 8. Each line ships from the material's home plant 85% of the
+  time, otherwise a uniformly random plant.
+- End-of-sale dates are assigned an offset of -20 to +15 weeks from the start of the simulation,
+  so a large share are already past their end-sale date from week 1 (structural from the start,
+  not something that develops during the demo).
+- Root-cause attribution: if a material is past end-of-sale, its cause is always "eos" regardless
+  of any other flag; otherwise a receipt-short material's cause splits 70/30 between
+  "supply shortage" and "logistics delay," and the residual fallback splits 60/40 between
+  "customer" and "forecast."
+
+</details>
+
+### 6.2 The descriptive engine (`app/engine.py`)
+
+- **Confirmation rate**: `rate = 100 × confirmed ÷ (confirmed + unconfirmed)`, rounded to 2
+  decimal places, computed fresh per week from the order-line table.
+- **Week-over-week trend**: `up` if this week's units exceed last week's by more than 5%, `down`
+  if they fall short by more than 5%, otherwise `flat`. If there's no prior week to compare
+  against, the trend defaults to `up` (since any positive number exceeds a zero baseline).
+- `TARGET = 95.0` — the confirmation-rate target the rest of the app compares against.
+
+### 6.3 The predictive engine (`app/predict.py`)
+
+- **Flags**: `failing` = unconfirmed units > 0; `forecast-weak` = forecast accuracy < 0.5;
+  `coverage-thin` = stock coverage < 1.0 months; `stressed` = any one of forecast-weak,
+  coverage-thin, or on the end-of-sale list.
+- **Calibration**: for every combination of flags, `p = round(mean(fail_next), 4)` and
+  `n = count`, computed once at three-signal ("fine") granularity and once at two-signal
+  ("coarse") granularity.
+- **The min-support fallback**: use the fine-cell percentage only if it has at least 50 examples
+  behind it (`MIN_SUPPORT = 50`); otherwise fall back to the coarser, more example-rich cell.
+- **Lift** (both the "extra warning signs" and "horizon reach" charts): `lift = P(fail | flag) ÷
+  P(fail | no flag)`, rounded to one decimal.
+- **Expected units**: `round(risk probability × unconfirmed units, 1)`.
+- **Structural vs. recoverable**: structural = past end-of-sale; recoverable = everything else.
+- **The lever cascade**, in priority order: past end-of-sale → "reallocate, no recovery lever";
+  else receipt-short → "expedite inbound receipt / PO follow-up"; else forecast-weak → "correct
+  the demand plan for this material"; else coverage-thin → "rebuild safety stock / raise
+  coverage"; else → "review order book with the customer team."
+- **Confidence tier**: risk probability binned as Watch (up to 15%), Medium (15% up to 50%), or
+  High (50% and above) — literally `pandas.cut(riskProb, [-1, 0.15, 0.5, 2], labels=["Watch",
+  "Medium", "High"])`.
+- **Category fallback**: when a measured cause isn't available, one is predicted from the driving
+  signal: past end-of-sale → Other; else receipt-short → Supply; else forecast-weak →
+  Forecasting; else coverage-thin → Supply; else → Customer.
+- **Register sort**: by expected units descending, ties broken by shortfall descending.
+- **The volume point forecast** — the most involved formula in the codebase, worth spelling out
+  in full:
+  ```
+  persistence estimate = Σ (risk probability × unconfirmed units) over all currently-failing materials
+  new_share             = the historical average share of a week's actual unconfirmed volume that
+                           comes from materials that were NOT yet failing the week before
+                           (i.e. "brand-new" trouble, not a repeat)
+  point forecast         = persistence estimate ÷ (1 − new_share)
+  ```
+  Algebraically, `persistence_estimate × (1 + new_share/(1-new_share))` (the form in the code)
+  and `persistence_estimate ÷ (1 - new_share)` are the same thing — the persistence-only number
+  is inflated to account for the trouble that historically shows up from nowhere. `MAPE` is then
+  `mean(|point forecast − actual| ÷ actual)` across the training weeks.
+- **Dispersion band** (`band_stats`): `mean` and `std` (sample standard deviation) of the 12
+  weekly rates, `autocorrelation` = the lag-1 correlation coefficient between each week's rate and
+  the next, `band = mean ± 1 std`, and `memoryless = |autocorrelation| < 0.35`.
+
+### 6.4 Held-out validation formulas
+
+All four are computed by calibrating on every week except the last, then scoring the prediction
+against what the held-out week actually did:
+
+- **Persistence floor**: `mean(fail next week | failing this week)`, on the held-out week.
+- **Leading-signal lift**: among materials not yet failing, `P(fail | receipt-short) ÷ P(fail |
+  quiet)`, on the held-out week.
+- **Net recall**: `(materials that actually failed AND were flagged in advance) ÷ (all materials
+  that actually failed)`.
+- **Worklist precision**: of the top 60 recoverable materials ranked by expected units, the share
+  that actually failed.
+- **Held-out volume**: the same point-forecast formula as §6.3, using only the `new_share`
+  measured from training weeks, compared against a naive carry-forward baseline (just repeating
+  the current week's exposure) and the real actual outcome.
+
+<details>
+<summary><b>6.5 The validation gate, complete: all 42 assertions</b></summary>
+
+`app/selfcheck.py` runs at every database build, grouped exactly as follows. If any assertion
+fails, the build itself fails and nothing ships. The total count (42) is emergent from the data
+(one group has a variable number of checks, one per statistically-qualifying cell and one per
+serving file that exists on disk), not a hardcoded loop bound.
+
+**Headline: right level, memoryless**
+1. Mean weekly confirmation rate is between 90.5% and 93.5%.
+2. Every individual week's rate is between 88% and 95.5%.
+3. The absolute lag-1 autocorrelation is below 0.35 (i.e. the headline is genuinely memoryless).
+
+**Risk table: monotone gradient, strong leading lift**
+4. The coarse 2×2 cells are strictly increasing: quiet-and-fine < quiet-and-short <
+   failing-and-fine < failing-and-short.
+5. The both-flags cell (failing and short) exceeds 50%.
+6. The leading lift (short-only vs. neither flag) exceeds 8×.
+7. Every calibrated probability falls between 0 and 1.
+8. At least 6 of the fine (three-signal) cells have 50 or more examples behind them.
+
+**Measured vs. planted: does the engine honestly recover the generator's hidden hazards?**
+9. For every state with at least 200 observations, the measured next-week failure rate is within
+   35% (relative) of the mean planted hazard for that state — one check per qualifying state, so
+   this group's count varies run to run depending on how much data landed in each bucket.
+
+**Persistence floor**
+10. The persistence floor falls between 55% and 78%.
+
+**Hard-search: every extra warning sign adds real lift**
+11. Forecast-weak lift exceeds 3×.
+12. Coverage-thin lift exceeds 3×.
+13. End-of-sale lift exceeds 5×.
+
+**Horizon: the leading signal reaches forward**
+14. The one-week-ahead (T+1) lift exceeds 8×.
+15. The four-week-ahead (T+4) lift is still at least 40% of the T+1 lift (it's allowed to fade,
+    but not collapse to nothing).
+
+**Held-out final week (a week the calibration never saw)**
+16. Held-out leading-signal lift exceeds 3×.
+17. Held-out net recall exceeds 90%.
+18. Held-out worklist precision exceeds 60%.
+
+**Concentration: watch the few, not the thousands**
+19. The top 5 plants carry at least 70% of the latest week's unconfirmed volume.
+20. 150 or fewer materials (ranked by unconfirmed volume) account for 80% of that volume.
+
+**Register partitions and spot-checks**
+21. The register's row count matches the build's own recorded count.
+22. Every register row is either "failing" or "emerging," and those two groups exactly partition
+    the register (no overlap, nothing left out).
+23. Every register row is either "recoverable" or "structural," and those two groups exactly
+    partition the register the same way.
+24. Every "emerging" (not-yet-failing) row carries zero measured unconfirmed units, so it can
+    never be confused with a measured number.
+25. Every register row has both a lever and a confidence tier assigned.
+26. Every numeric column in the register (units, shortfall, risk probability, expected units) is
+    a finite number, never blank or broken.
+27. Materials that have been receipt-short for 10 or more of the 12 weeks, and are still short in
+    the final week, all appear in the register (chronic problems can't slip through).
+28. Every register row past its end-of-sale date is marked structural, with no exceptions.
+29. Materials that are quiet, supply-sufficient, and unstressed in the final week never appear in
+    the register (the tool doesn't flag things it has no reason to flag).
+
+**The tool never reads the hidden answer key**
+30. For each of the six live-serving code files, the literal text `generator_truth` does not
+    appear anywhere in it — checked mechanically per file, so the exact count depends on which
+    files exist in a given build.
+
+**Determinism**: rebuilding the practice world from scratch, twice, with the same seed, produces
+exactly the same numbers both times.
+
+</details>

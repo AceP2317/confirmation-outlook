@@ -329,7 +329,7 @@ function Outlook({ head, fc, brk }) {
           <p>P(fail next week) is <b>measured</b> for each state cell across all observed transitions &mdash; a frequency table, not a fitted model &mdash; with a minimum-support fallback from the fine table to the coarse one.</p>
           <p>The final week is <b>held out</b>: the register is predicted from the prior week&rsquo;s signals and scored against what actually happened.</p>
           <p>The at-risk register ranks materials by expected units (probability &times; current exposure), splits recoverable from structural, and names the lever an operator would pull.</p>
-          <p>A build-time validation gate (42 assertions) checks that the engine honestly recovers the planted structure &mdash; the build fails if any assertion fails. See <a href="https://github.com/AceP2317/confirmation-outlook/blob/main/docs/METHODOLOGY.md">METHODOLOGY.md</a>.</p>
+          <p>A build-time validation gate (42 assertions) checks that the engine honestly recovers the planted structure &mdash; the build fails if any assertion fails. See <a href="https://github.com/AceP2317/confirmation-outlook/blob/main/docs/METHODOLOGY.md" target="_blank" rel="noopener noreferrer">METHODOLOGY.md</a>.</p>
         </div>
       </details>
     </div>
@@ -609,6 +609,9 @@ export default function App() {
             <span className="np-demo-tag">synthetic demo</span>
             <span className="spacer" />
             {data && <span className="np-asof">as of {data.head.asof} &middot; {cwShort(data.head.latest)}</span>}
+            <a className="np-btn primary" href="/how-it-works.html" target="_blank" rel="noopener noreferrer">
+              &#128214; Instruction Manual
+            </a>
             <button className="np-btn" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>
               {theme === 'dark' ? '☀' : '☾'}
@@ -629,9 +632,10 @@ export default function App() {
           <footer className="np-foot">
             <span>Built by Ian Provencher</span>
             <span>Northpoint Manufacturing is fictional; all data is synthetic (seeded generator, validated engine)</span>
-            <a href="/how-it-works.html">How it works</a>
-            <a href={`${API_BASE}/docs`}>API</a>
-            <a href="https://github.com/AceP2317/confirmation-outlook">Source</a>
+            <a href="/how-it-works.html" target="_blank" rel="noopener noreferrer">Instruction Manual</a>
+            <a href="https://github.com/AceP2317/confirmation-outlook/blob/main/docs/METHODOLOGY.md" target="_blank" rel="noopener noreferrer">Methodology (technical)</a>
+            <a href={`${API_BASE}/docs`} target="_blank" rel="noopener noreferrer">API</a>
+            <a href="https://github.com/AceP2317/confirmation-outlook" target="_blank" rel="noopener noreferrer">Source</a>
           </footer>
         </div>
       </TipLayer>
