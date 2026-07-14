@@ -629,6 +629,7 @@ export default function App() {
           <footer className="np-foot">
             <span>Built by Ian Provencher</span>
             <span>Northpoint Manufacturing is fictional; all data is synthetic (seeded generator, validated engine)</span>
+            <a href="/how-it-works.html">How it works</a>
             <a href={`${API_BASE}/docs`}>API</a>
             <a href="https://github.com/AceP2317/confirmation-outlook">Source</a>
           </footer>
